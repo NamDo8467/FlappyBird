@@ -7,7 +7,8 @@ const lowerPipeMaxHeight = 200,
   minHeight = 100;
 let score = 0;
 let gameOverMessage = "not over";
-document.addEventListener("keydown", async (e) => {
+
+const birdUp = async (e) => {
   if (e.key == "ArrowUp") {
     if (bird.offsetTop != 0) {
       bird.style.top = `${bird.offsetTop - 15}px`;
@@ -15,12 +16,9 @@ document.addEventListener("keydown", async (e) => {
       await delay(100);
       bird.style.transform = "rotateZ(0deg)";
     }
-  } else if (e.key == "ArrowDown") {
-    if (bird.offsetTop != 350) {
-      bird.style.top = `${bird.offsetTop + 20}px`;
-    }
   }
-});
+};
+document.addEventListener("keydown", birdUp);
 
 document.addEventListener("keyup", () => {
   bird.style.transform = "rotateZ(0deg)";
@@ -34,26 +32,43 @@ const delay = (milliseconds) => {
   });
 };
 
-
+const checkScore = (upperPipe, lowerPipe) => {
+  if (
+    bird.getBoundingClientRect().left >
+      upperPipe.getBoundingClientRect().right &&
+    bird.getBoundingClientRect().left > lowerPipe.getBoundingClientRect().right
+  ) {
+    console.log("passed");
+    score += 1;
+  }
+};
 
 const generatePipes = () => {
-  let lowerPipeHeight = parseInt(Math.floor(Math.random() * (lowerPipeMaxHeight - minHeight) + minHeight) /10) * 10;
+  let lowerPipeHeight =
+    parseInt(
+      Math.floor(Math.random() * (lowerPipeMaxHeight - minHeight) + minHeight) /
+        10
+    ) * 10;
   const lowerPipe = document.createElement("div");
   lowerPipe.className = "lower-pipe";
   lowerPipe.style.height = `${lowerPipeHeight}px`;
 
   //290 and 113 are the ratio to make the lower pipes sit right on top of the ground
   lowerPipe.style.top = `${290 - (lowerPipeHeight - 113)}px`;
-  // console.log(290-(lowerPipeHeight-113))
   gameContainer.appendChild(lowerPipe);
 
-  let upperPipeHeight = parseInt(Math.floor(Math.random() * (upperPipeMaxHeight - minHeight) + minHeight) / 10) * 10;
+  let upperPipeHeight =
+    parseInt(
+      Math.floor(Math.random() * (upperPipeMaxHeight - minHeight) + minHeight) /
+        10
+    ) * 10;
   const upperPipe = document.createElement("div");
   upperPipe.className = "upper-pipe";
   upperPipe.style.height = `${upperPipeHeight}px`;
   gameContainer.appendChild(upperPipe);
 
   let movingPipes = setInterval(() => {
+    // console.log(bird.getBoundingClientRect().bottom, lowerPipe.getBoundingClientRect().top);
     const hitUpperPipeHorizontally =
       bird.getBoundingClientRect().right + 5 ==
         Math.floor(upperPipe.getBoundingClientRect().left) &&
@@ -87,11 +102,11 @@ const generatePipes = () => {
       gameOverMessage = "game over";
       clearInterval(birdDown);
       clearInterval(movingPipes);
-      console.log(bird.getBoundingClientRect().bottom, lowerPipe.getBoundingClientRect().top);
-      console.log(  hitUpperPipeHorizontally,
-        hitUpperPipeVertically,
-        hitLowerPipeHorizontally,
-        hitLowerPipeVertically);
+      // console.log(bird.getBoundingClientRect().bottom, lowerPipe.getBoundingClientRect().top);
+      // console.log(  hitUpperPipeHorizontally,
+      //   hitUpperPipeVertically,
+      //   hitLowerPipeHorizontally,
+      //   hitLowerPipeVertically);
     }
     let lowerLeft = lowerPipe.offsetLeft;
     lowerPipe.style.left = `${lowerLeft - 10}px`;
@@ -100,7 +115,15 @@ const generatePipes = () => {
     let upperLeft = upperPipe.offsetLeft;
     upperPipe.style.left = `${upperLeft - 10}px`;
     upperPipe.style.transition = "left 0.12s ease";
-
+    if (
+      upperPipe.getBoundingClientRect().right <= 0 ||
+      lowerPipe.getBoundingClientRect().right <= 0
+    ) {
+      gameContainer.removeChild(upperPipe);
+      gameContainer.removeChild(lowerPipe);
+      score += 1;
+      clearInterval(movingPipes);
+    }
     // clearInterval(movingPipes);
   }, 0);
 
@@ -122,16 +145,12 @@ generatePipes();
 let generateMorePipes = setInterval(() => {
   if (gameOverMessage == "not over") {
     generatePipes();
-      // const upperPipes = document.querySelectorAll('.upper-pipe')
-      // const lowerPipes = document.querySelectorAll('.lower-pipe')
-      // if (upperPipes[0].getBoundingClientRect().right <= 0 || lowerPipes[0].getBoundingClientRect().right <= 0) {
-      //   gameContainer.removeChild(upperPipes[0]);
-      //   gameContainer.removeChild(lowerPipes[0])
-        
-      // }
-  } else if(gameOverMessage == "game over"){
+  } else if (gameOverMessage == "game over") {
     clearInterval(generateMorePipes);
-    alert("game over")
+    document.removeEventListener("keydown", birdUp);
+    // console.log(score);
+    alert(`Game over
+Score: ${score}`);
     // alert(score)
   }
 }, 3000);
